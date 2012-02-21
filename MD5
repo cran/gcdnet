@@ -1,6 +1,6 @@
 94d55d512a9ba36caa9b7df079bae19f *COPYING
-245481b4557ccffae4fe7acd2fb3d3cb *ChangeLog
-46530b44060460ab9120015ecda4113c *DESCRIPTION
+4803c257453ffa0bfc607f07ace07006 *ChangeLog
+9bf2b34439de8642c80436b5cbbac2b4 *DESCRIPTION
 17a784dc40362b1cf44a7b2c039b7845 *NAMESPACE
 7f7ccc3f97f8ac5e4c92a24a45dc3621 *R/coef.cv.gcdnet.R
 52136788adcaf0c8aca18e7151af943a *R/coef.gcdnet.R
@@ -34,7 +34,7 @@ dad017c02fe27fb9f767d83cb777c5d5 *man/FHT.Rd
 73f37194d27c401f86ecbc96f4739144 *man/coef.cv.gcdnet.Rd
 914f468e75d796310eb97c5bb252df5c *man/coef.gcdnet.Rd
 7b0d1a2926cf7dac6c37eeedabeeaa94 *man/cv.gcdnet.Rd
-9ec20ada15c05456f3f86650e170e920 *man/gcdnet.Rd
+690649f73cb44786254269e65a373406 *man/gcdnet.Rd
 cb3058a9c7394ac4987aafce0b059406 *man/plot.cv.gcdnet.Rd
 72dcad95acb475405b627ddfde7e1724 *man/plot.gcdnet.Rd
 c382be116064aad9162218e8dcbd6d10 *man/predict.cv.gcdnet.Rd
