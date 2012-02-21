@@ -6,7 +6,8 @@
 gcdnet(x, y, nlambda = 100, 
 		method = c("hhsvm", "logit", "sqsvm"),
 		lambda.factor = ifelse(nobs < nvars, 0.01, 1e-04), lambda = NULL, lambda2 = 0, 
-		pf = rep(1, nvars), exclude, dfmax = nvars + 1, pmax = min(dfmax * 1.2, 
+		pf = rep(1, nvars), pf2 = rep(1, nvars), exclude, 
+		dfmax = nvars + 1, pmax = min(dfmax * 1.2, 
 	    nvars), standardize = TRUE, eps = 1e-8, maxit = 1e6, delta = 2)
 }
 \arguments{
@@ -20,7 +21,7 @@ gcdnet(x, y, nlambda = 100,
 		\item \code{"sqsvm"} Squared hinge loss,
 		\item \code{"logit"} logistic loss.
 		}Default is \code{"loss"}.}
-		\item{lambda.factor}{The factor for getting the minimal lambda in \code{lambda} sequence, where \code{min(lambda) = lambda.factor * max(lambda)}.  \code{max(lambda)} is the smallest value of \code{lambda} for which all coefficients are zero. The default depends on the relationship between \eqn{N} (the number of rows in the matrix of predictors) and \eqn{p} (the number of predictors). If \eqn{N > p}, the default is \code{0.0001},
+		\item{lambda.factor}{The factor for getting the minimal lambda in \code{lambda} sequence, where \code{min(lambda)} = \code{lambda.factor} * \code{max(lambda)}.  \code{max(lambda)} is the smallest value of \code{lambda} for which all coefficients are zero. The default depends on the relationship between \eqn{N} (the number of rows in the matrix of predictors) and \eqn{p} (the number of predictors). If \eqn{N > p}, the default is \code{0.0001},
 		close to zero.  If \eqn{N<p}, the default is \code{0.01}.
 		A very small value of \code{lambda.factor} will lead to a saturated fit. It takes no effect if there is user-defined \code{lambda} sequence.} 
 		\item{lambda}{a user supplied \code{lambda} sequence. Typically, by leaving this option unspecified users can have 
@@ -32,11 +33,15 @@ gcdnet(x, y, nlambda = 100,
 		\item{lambda2}{regularization parameter \eqn{\lambda_2}{lambda2} for the quadratic penalty of the 
 		coefficients.}
 
-		\item{pf}{penalty factor of length \eqn{p}. Separate penalty weights can be applied to each coefficient of \eqn{\beta}{beta} to allow
-		differential shrinkage. Can be 0 for some variables, which implies
-		no shrinkage, and results in that variable always being included in the
+		\item{pf}{L1 penalty factor of length \eqn{p}. Separate L1 penalty weights can be applied to each coefficient of \eqn{\beta}{beta} to allow
+		differential L1 shrinkage. Can be 0 for some variables, which implies
+		no L1 shrinkage, and results in that variable always being included in the
 		model. Default is 1 for all variables (and implicitly infinity for
 		variables listed in \code{exclude}).}
+		
+		\item{pf2}{L2 penalty factor of length \eqn{p}. Separate L2 penalty weights can be applied to each coefficient of \eqn{\beta}{beta} to allow
+		differential L2 shrinkage. Can be 0 for some variables, which implies
+		no L2 shrinkage. Default is 1 for all variables.}
 
 		\item{exclude}{indices of variables to be excluded from the
 		model. Default is none. Equivalent to an infinite penalty factor.}
