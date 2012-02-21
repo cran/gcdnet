@@ -1,10 +1,10 @@
 ! --------------------------------------------------------------------------
-! loglassoNET.f90: the GCD algorithm for logistic regression.
+! lslassoNET.f90: the GCD algorithm for least squares regression.
 ! --------------------------------------------------------------------------
 ! 
 ! USAGE:
 ! 
-! call loglassoNET (lam2, nobs, nvars, x, y, jd, pf, pf2, dfmax, &
+! call lslassoNET (lam2, nobs, nvars, x, y, jd, pf, pf2, dfmax, &
 ! & pmax, nlam, flmin, ulam, eps, isd, maxit, nalam, b0, beta, ibeta, &
 ! & nbeta, alam, npass, jerr)
 ! 
@@ -14,8 +14,7 @@
 !    nobs = number of observations
 !    nvars = number of predictor variables
 !    x(nobs, nvars) = matrix of predictors, of dimension N * p; each row is an observation vector.
-!    y(nobs) = response variable. This argument should be a two-level factor {-1, 1} 
-!            for classification.
+!    y(nobs) = response variable.
 !    jd(jd(1)+1) = predictor variable deletion flag
 !                  jd(1) = 0  => use all variables
 !                  jd(1) != 0 => do not use variables jd(2)...jd(jd(1)+1)
@@ -79,7 +78,7 @@
 
 
 ! --------------------------------------------------
-SUBROUTINE loglassoNET (lam2, nobs, nvars, x, y, jd, pf, pf2, dfmax, pmax, &
+SUBROUTINE lslassoNET (lam2, nobs, nvars, x, y, jd, pf, pf2, dfmax, pmax, &
 & nlam, flmin, ulam, eps, isd, maxit, nalam, b0, beta, ibeta, nbeta, &
 & alam, npass, jerr)
 ! --------------------------------------------------
@@ -146,9 +145,9 @@ SUBROUTINE loglassoNET (lam2, nobs, nvars, x, y, jd, pf, pf2, dfmax, pmax, &
       pf = Max (0.0D0, pf)
       pf2 = Max (0.0D0, pf2)
       CALL standard (nobs, nvars, x, ju, isd, xmean, xnorm, maj)
-      CALL loglassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
-     & dfmax, pmax, nlam, flmin, ulam, eps, maxit, nalam, b0, beta, &
-     & ibeta, nbeta, alam, npass, jerr)
+      CALL lslassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, dfmax, &
+     & pmax, nlam, flmin, ulam, eps, maxit, nalam, b0, beta, ibeta, &
+     & nbeta, alam, npass, jerr)
       IF (jerr > 0) RETURN! check error after calling function
 ! - - - organize beta afterward - - -
       DO l = 1, nalam
@@ -163,11 +162,11 @@ SUBROUTINE loglassoNET (lam2, nobs, nvars, x, y, jd, pf, pf2, dfmax, pmax, &
       END DO
       DEALLOCATE (ju, xmean, xnorm, maj)
       RETURN
-END SUBROUTINE loglassoNET
+END SUBROUTINE lslassoNET
 ! --------------------------------------------------
-SUBROUTINE loglassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
-& dfmax, pmax, nlam, flmin, ulam, eps, maxit, nalam, b0, beta, m, &
-& nbeta, alam, npass, jerr)
+SUBROUTINE lslassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, dfmax, &
+& pmax, nlam, flmin, ulam, eps, maxit, nalam, b0, beta, m, nbeta, alam, &
+& npass, jerr)
 ! --------------------------------------------------
       IMPLICIT NONE
         ! - - - arg types - - -
@@ -230,7 +229,7 @@ SUBROUTINE loglassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
       jerr = jerr + ierr
       IF (jerr /= 0) RETURN
 ! - - - some initial setup - - -
-      r = 0.0D0
+      r = y
       b = 0.0D0
       oldbeta = 0.0D0
       m = 0
@@ -238,7 +237,7 @@ SUBROUTINE loglassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
       npass = 0
       ni = npass
       mnl = Min (mnlam, nlam)
-      maj = 0.25 * maj
+      maj = 2.0D0 * maj
       IF (flmin < 1.0D0) THEN
          flmin = Max (mfl, flmin)
          alf = flmin ** (1.0D0/(nlam-1.0D0))
@@ -258,8 +257,8 @@ SUBROUTINE loglassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
                DO j = 1, nvars
                   IF (ju(j) /= 0) THEN
                      IF (pf(j) > 0.0D0) THEN
-                        al = Max (al, Abs(dot_product(y/(1.0D0+Exp(r)), &
-                       & x(:, j)))/pf(j))
+                        u = dot_product (r, x(:, j))
+                        al = Max (al, Abs(u)/pf(j))
                      END IF
                   END IF
                END DO
@@ -278,7 +277,7 @@ SUBROUTINE loglassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
                DO k = 1, nvars
                   IF (ju(k) /= 0) THEN
                      oldb = b (k)
-                     u = dot_product (y/(1.0D0 + Exp(r)), x(:, k))
+                     u = dot_product (r, x(:, k))
                      u = maj (k) * b (k) + u / nobs
                      v = al * pf (k)
                      v = Abs (u) - v
@@ -290,7 +289,7 @@ SUBROUTINE loglassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
                      d = b (k) - oldb
                      IF (Abs(d) > 0.0D0) THEN
                         dif = Max (dif, d**2)
-                        r = r + y * x (:, k) * d
+                        r = r - x (:, k) * d
                         IF (mm(k) == 0) THEN
                            ni = ni + 1
                            IF (ni > pmax) EXIT
@@ -301,11 +300,10 @@ SUBROUTINE loglassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
                   END IF
                END DO
                IF (ni > pmax) EXIT
-               d = sum (y/(1.0D0+Exp(r)))
-               d = 4.0D0 * d / nobs
+               d = sum (r) / nobs
                IF (d /= 0.0D0) THEN
                   b (0) = b (0) + d
-                  r = r + y * d
+                  r = r - d
                   dif = Max (dif, d**2)
                END IF
                IF (dif < eps) EXIT
@@ -316,7 +314,7 @@ SUBROUTINE loglassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
                   DO j = 1, ni
                      k = m (j)
                      oldb = b (k)
-                     u = dot_product (y/(1.0D0 + Exp(r)), x(:, k))
+                     u = dot_product (r, x(:, k))
                      u = maj (k) * b (k) + u / nobs
                      v = al * pf (k)
                      v = Abs (u) - v
@@ -328,14 +326,13 @@ SUBROUTINE loglassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
                      d = b (k) - oldb
                      IF (Abs(d) > 0.0D0) THEN
                         dif = Max (dif, d**2)
-                        r = r + y * x (:, k) * d
+                        r = r - x (:, k) * d
                      END IF
                   END DO
-                  d = sum (y/(1.0D0+Exp(r)))
-                  d = 4.0D0 * d / nobs
+                  d = sum (r) / nobs
                   IF (d /= 0.0D0) THEN
                      b (0) = b (0) + d
-                     r = r + y * d
+                     r = r - d
                      dif = Max (dif, d**2)
                   END IF
                   IF (dif < eps) EXIT
@@ -375,4 +372,4 @@ SUBROUTINE loglassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
       END DO
       DEALLOCATE (b, oldbeta, r, mm)
       RETURN
-END SUBROUTINE loglassoNETpath
+END SUBROUTINE lslassoNETpath
