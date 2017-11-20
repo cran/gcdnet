@@ -4,6 +4,7 @@
 \alias{predict.sqsvmpath}
 \alias{predict.logitpath}
 \alias{predict.lspath}
+\alias{predict.erpath}
 \title{make predictions from a "gcdnet" object.}
 
 \description{
@@ -18,7 +19,7 @@ type=c("class","link"), ...)
 \arguments{
 		\item{object}{fitted \code{\link{gcdnet}} model object.}
 		\item{newx}{matrix of new values for \code{x} at which predictions are
-		to be made. NOTE: \code{newx} must be a matrix, \code{predict} function does not accept a vector or other formats of code{newx}.}
+		to be made. NOTE: \code{newx} must be a matrix, \code{predict} function does not accept a vector or other formats of \code{newx}.}
 		\item{s}{value(s) of the penalty parameter \code{lambda} at which
 		predictions are required. Default is the entire sequence used to
 		create the model. }
@@ -34,11 +35,11 @@ type=c("class","link"), ...)
 \value{The object returned depends on type.}
 
 
-\author{Yi Yang and Hui Zou\cr
-Maintainer: Yi Yang  <yiyang@umn.edu>}
+\author{Yi Yang, Yuwen Gu and Hui Zou\cr
+Maintainer: Yi Yang  <yi.yang6@mcgill.ca>}
 \references{
 Yang, Y. and Zou, H. (2012), "An Efficient Algorithm for Computing The HHSVM and Its Generalizations," \emph{Journal of Computational and Graphical Statistics}, 22, 396-415.\cr
-BugReport: \url{http://code.google.com/p/gcdnet/}\cr
+BugReport: \url{https://github.com/emeryyi/fastcox.git}\cr
 
 
 Friedman, J., Hastie, T., and Tibshirani, R. (2010), "Regularization paths for generalized

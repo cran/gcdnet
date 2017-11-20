@@ -1,5 +1,5 @@
-predict.hsvmpath <- function(object, newx, s = NULL, 
-    type = c("class", "link"), ...) {
+predict.erpath <- function(object, newx, s = NULL, 
+    type = c("link"), ...) {
     type <- match.arg(type)
     b0 <- object$b0
     nbeta <- rbind2(b0, object$beta)
@@ -13,5 +13,5 @@ predict.hsvmpath <- function(object, newx, s = NULL,
         dimnames(nbeta) <- list(vnames, paste(seq(along = s)))
     }
     nfit <- as.matrix(as.matrix(cbind2(1, newx)) %*% nbeta)
-    switch(type, link = nfit, class = ifelse(nfit > 0, 1, -1))
+    nfit
 } 

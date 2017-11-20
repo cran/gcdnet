@@ -70,11 +70,13 @@
 ! LICENSE: GNU GPL (version 2 or later)
 ! 
 ! AUTHORS:
-!    Yi Yang (yiyang@umn.edu) and Hui Zou (hzou@stat.umn.edu), 
+!    Yi Yang (yi.yang6@mcgill.ca)  
+!    and Hui Zou (hzou@stat.umn.edu).
 !    School of Statistics, University of Minnesota.
 ! 
 ! REFERENCES:
-!    Yang, Y. and Zou, H. (2012). An Efficient Algorithm for Computing The HHSVM and Its Generalizations.
+!    Yang, Y. and Zou, H. (2012). An Efficient Algorithm for Computing 
+!    The HHSVM and Its Generalizations.
 !    Journal of Computational and Graphical Statistics, 22, 396-415.
 
 
@@ -215,7 +217,6 @@ SUBROUTINE sqsvmlassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
       INTEGER :: j
       INTEGER :: l
       INTEGER :: vrg
-      INTEGER :: ctr
       INTEGER :: ierr
       INTEGER :: ni
       INTEGER :: me
@@ -242,7 +243,7 @@ SUBROUTINE sqsvmlassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
       maj = 4.0 * maj
       IF (flmin < 1.0D0) THEN
          flmin = Max (mfl, flmin)
-         alf = flmin ** (1.0D0/(nlam-1.0D0))
+         alf = flmin ** (1.0D0/(DBLE(nlam)-1.0D0))
       END IF
 ! --------- lambda loop ----------------------------
       DO l = 1, nlam
@@ -268,7 +269,6 @@ SUBROUTINE sqsvmlassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
                al = al * alf / nobs
             END IF
          END IF
-         ctr = 0
         ! --------- outer loop ----------------------------
          DO
             oldbeta (0) = b (0)
@@ -303,7 +303,6 @@ SUBROUTINE sqsvmlassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
                      END IF
                   END IF
                END DO
-               IF (ni > pmax) EXIT
                dl = 2.0 * dim (1.0D0, r)
                d = sum(y * dl)
                d = 0.25 * d / nobs
@@ -312,7 +311,12 @@ SUBROUTINE sqsvmlassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
                   r = r + y * d
                   dif = Max (dif, d**2)
                END IF
+               IF (ni > pmax) EXIT
                IF (dif < eps) EXIT
+               IF(npass > maxit) THEN
+                  jerr=-l
+                  RETURN
+               ENDIF
         ! --inner loop----------------------
                DO
                   npass = npass + 1
@@ -345,6 +349,10 @@ SUBROUTINE sqsvmlassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
                      dif = Max (dif, d**2)
                   END IF
                   IF (dif < eps) EXIT
+                  IF(npass > maxit) THEN
+                     jerr=-l
+                     RETURN
+                  ENDIF
                END DO
             END DO
             IF (ni > pmax) EXIT
@@ -358,11 +366,6 @@ SUBROUTINE sqsvmlassoNETpath (lam2, maj, nobs, nvars, x, y, ju, pf, pf2, &
                END IF
             END DO
             IF (vrg == 1) EXIT
-            ctr = ctr + 1
-            IF (ctr > maxit) THEN
-               jerr = - l
-               RETURN
-            END IF
          END DO
     ! final update variable save results------------
          IF (ni > pmax) THEN

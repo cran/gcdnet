@@ -48,7 +48,7 @@
 !    nobs = number of observations
 !    nvars = number of predictor variables
 !    x(nobs, nvars) = matrix of predictors, of dimension N * p; each row is an observation vector.
-!    y(no) = response variable. This argument should be a two-level factor {-1, 1} 
+!    y(nobs) = response variable. This argument should be a two-level factor {-1, 1} 
 !            for classification.
 !    
 ! OUTPUT:
@@ -63,11 +63,11 @@ SUBROUTINE standard(nobs,nvars,x,ju,isd,xmean,xnorm,maj)
 ! --------------------------------------------------
     IMPLICIT NONE
     ! - - - arg types - - -
-    INTEGER::  nobs
+    INTEGER::nobs
     INTEGER::nvars
     INTEGER::isd
     INTEGER::ju(nvars)
-    DOUBLE PRECISION::  x(nobs,nvars)
+    DOUBLE PRECISION::x(nobs,nvars)
     DOUBLE PRECISION::xmean(nvars)
     DOUBLE PRECISION::xnorm(nvars)
     DOUBLE PRECISION::maj(nvars)

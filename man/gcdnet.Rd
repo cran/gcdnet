@@ -4,12 +4,13 @@
 \description{Fits a regularization path for large margin classifiers at a sequence of regularization parameters lambda.}
 \usage{
 gcdnet(x, y, nlambda = 100, 
-		method = c("hhsvm", "logit", "sqsvm", "ls"),
+		method = c("hhsvm", "logit", "sqsvm", "ls", "er"),
 		lambda.factor = ifelse(nobs < nvars, 0.01, 1e-04), 
 		lambda = NULL, lambda2 = 0, 
 		pf = rep(1, nvars), pf2 = rep(1, nvars), exclude, 
 		dfmax = nvars + 1, pmax = min(dfmax * 1.2, 
-	    nvars), standardize = TRUE, eps = 1e-8, maxit = 1e6, delta = 2)
+	    nvars), standardize = FALSE, eps = 1e-8, maxit = 1e6, 
+	    delta = 2, omega = 0.5)
 }
 \arguments{
 		\item{x}{matrix of predictors, of dimension \eqn{N \times p}{N*p}; each row is an observation vector.}
@@ -22,6 +23,7 @@ gcdnet(x, y, nlambda = 100,
 		\item \code{"sqsvm"} Squared hinge loss,
 		\item \code{"logit"} logistic loss,
 		\item \code{"ls"} least square loss.
+		\item \code{"er"} expectile regression loss.
 		} Default is \code{"hhsvm"}.}
 		\item{lambda.factor}{The factor for getting the minimal lambda in \code{lambda} sequence, where \code{min(lambda)} = \code{lambda.factor} * \code{max(lambda)}.  \code{max(lambda)} is the smallest value of \code{lambda} for which all coefficients are zero. The default depends on the relationship between \eqn{N} (the number of rows in the matrix of predictors) and \eqn{p}{p} (the number of predictors). If \eqn{N > p}, the default is \code{0.0001},
 		close to zero.  If \eqn{N<p}, the default is \code{0.01}.
@@ -54,22 +56,23 @@ gcdnet(x, y, nlambda = 100,
 		\item{pmax}{limit the maximum number of variables ever to be nonzero. For example once \eqn{\beta} enters the model, no matter how many times it exits or re-enters model through the path, it will be counted only once. Default is \code{min(dfmax*1.2,p)}.}
 
 		\item{standardize}{logical flag for variable standardization, prior to
-		fitting the model sequence. If \code{TRUE}, x matrix is normalized such that sum squares of each column \eqn{\sum^N_{i=1}x_{ij}^2/N=1}{<Xj,Xj>/N=1}. Note that x is always centered (i.e. \eqn{\sum^N_{i=1}x_{ij}=0}{sum(Xj)=0}) no matter \code{standardize} is \code{TRUE} or \code{FALSE}. The coefficients are always returned on
-		the original scale. Default is is \code{TRUE}.}
+		fitting the model sequence. If \code{TRUE}, \code{x} matrix is normalized such that \code{x} is centered (i.e. \eqn{\sum^N_{i=1}x_{ij}=0}{sum(Xj)=0}), and sum squares of each column \eqn{\sum^N_{i=1}x_{ij}^2/N=1}{<Xj,Xj>/N=1}. If \code{x} matrix is standardized, the ending coefficients will be transformed back to the original scale. Default is \code{FALSE}.}
 
 		\item{eps}{convergence threshold for coordinate majorization descent. Each inner
 		coordinate majorization descent loop continues until the relative change in any
-		coefficient (i.e. \eqn{\max_j(\beta_j^{new}-\beta_j^{old})^2}{max(j)(beta_new[j]-beta_old[j])^2}) is less than \code{eps}. For HHSVM i.e. \code{method="hhsvm"}, it is \eqn{\frac{2}{\delta}\max_j(\beta_j^{new}-\beta_j^{old})^2}{2*max(j)(beta_new[j]-beta_old[j])^2/delta}. Defaults value is \code{1e-8}.}
+		coefficient (i.e. \eqn{\max_j(\beta_j^{new}-\beta_j^{old})^2}{max(j)(beta_new[j]-beta_old[j])^2}) is less than \code{eps}. For HHSVM, i.e. \code{method="hhsvm"}, it is \eqn{\frac{2}{\delta}\max_j(\beta_j^{new}-\beta_j^{old})^2}{2*max(j)(beta_new[j]-beta_old[j])^2/delta}. For expectile regression, i.e. \code{method="er"}, it is \eqn{2\max(1-\omega,\omega)\max_j(\beta_j^{new}-\beta_j^{old})^2}{2*max(1-omega,omega)*max(j)(beta_new[j]-beta_old[j])^2}. Defaults value is \code{1e-8}.}
 
 		\item{maxit}{maximum number of outer-loop iterations allowed at fixed lambda value. Default is 1e6. If models do not converge, consider increasing \code{maxit}.}
 
-		\item{delta}{the parameter \eqn{\delta}{delta} in HHSVM model. Default is 2.}
+		\item{delta}{the parameter \eqn{\delta}{delta} in the HHSVM model. The value must be greater than 0. Default is 2.}
+		\item{omega}{the parameter \eqn{\omega}{omega} in the expectile regression model. The value must be in (0,1). Default is 0.5.}
+		
 }
 
 \details{
 Note that the objective function in \code{gcdnet} is
 \deqn{Loss(y, X, beta))/N + lambda1 * |beta| + 0.5 * lambda2 * beta^2}
-where the penalty is a combination of L1 and L2 term. Users can specify the loss function to use, options include Huberized squared hinge loss, Squared hinge loss, least square loss and logistic regression. Users can also tweak the penalty by choosing different \eqn{lambda2} and penalty factor. 
+where the penalty is a combination of L1 and L2 term. Users can specify the loss function to use, options include Huberized squared hinge loss, Squared hinge loss, least square loss, logistic regression and expectile regression loss. Users can also tweak the penalty by choosing different \eqn{lambda2} and penalty factor. 
 
 For computing speed reason, if models are not converging or running slow, consider increasing \code{eps}, decreasing
 \code{nlambda}, or increasing \code{lambda.factor} before increasing
@@ -167,29 +170,54 @@ An object with S3 class \code{\link{gcdnet}}.
 		\item{jerr}{error flag, for warnings and errors, 0 if no error.}
 }
 
-\author{Yi Yang and Hui Zou\cr
-Maintainer: Yi Yang  <yiyang@umn.edu>}
+\author{Yi Yang, Yuwen Gu and Hui Zou\cr
+Maintainer: Yi Yang  <yi.yang6@mcgill.ca>}
 \references{
 Yang, Y. and Zou, H. (2012), "An Efficient Algorithm for Computing The HHSVM and Its Generalizations," \emph{Journal of Computational and Graphical Statistics}, 22, 396-415.\cr
-BugReport: \url{http://code.google.com/p/gcdnet/}\cr
+BugReport: \url{https://github.com/emeryyi/fastcox.git}\cr
 }
 
 
 \seealso{\code{plot.gcdnet}}
 \examples{
 data(FHT)
-# solution paths for the least squares
-m0 <- gcdnet(x=FHT$x,y=FHT$y_reg,lambda2=1,method="ls")
-plot(m0)
-# solution paths for the HHSVM
-m1 <- gcdnet(x=FHT$x,y=FHT$y,delta=1,lambda2=1,method="hhsvm")
+# 1. solution paths for the LASSO penalized least squares.
+# To use LASSO set lambda2 = 0.
+
+m1 <- gcdnet(x=FHT$x, y=FHT$y_reg, lambda2=0, method="ls")
 plot(m1)
-# solution paths for the penalized SVM with the squared hinge loss
-m2 <- gcdnet(x=FHT$x,y=FHT$y,lambda2=0.1,method="sqsvm")
+
+# 2. solution paths for the elastic net penalized HHSVM.
+# lambda2 is the parameter controlling the L2 penalty.
+m2 <- gcdnet(x=FHT$x, y=FHT$y, delta=1, lambda2=1, method="hhsvm")
 plot(m2)
-# solution paths for the penalized logistic regression
-m3 <- gcdnet(x=FHT$x,y=FHT$y,lambda2=0.01,method="logit")
+
+# 3. solution paths for the adaptive LASSO penalized SVM 
+# with the squared hinge loss. To use the adaptive LASSO, 
+# set lambda2 = 0 and meanwhile specify the L1 penalty weights.
+p <- ncol(FHT$x)
+# set the first three L1 penalty weights as 0.1 and the rest are 1
+pf = c(0.1,0.1,0.1,rep(1,p-3))
+m3 <- gcdnet(x=FHT$x, y=FHT$y, pf=pf, lambda2=0, method="sqsvm")
 plot(m3)
+
+# 4. solution paths for the adaptive elastic net penalized 
+# logistic regression.
+
+p <- ncol(FHT$x)
+# set the first three L1 penalty weights as 10 and the rest are 1.
+pf = c(10,10,10,rep(1,p-3))
+# set the last three L2 penalty weights as 0.1 and the rest are 1.
+pf2 = c(rep(1,p-3),0.1,0.1,0.1)
+# set the L2 penalty parameter lambda2=0.01.
+m4 <- gcdnet(x=FHT$x,y=FHT$y,pf=pf,pf2=pf2,lambda2=0.01,method="logit")
+plot(m4)
+
+# 5. solution paths for the LASSO penalized expectile regression
+# with the asymmetric least square parameter omega=0.9.
+
+m5 <- gcdnet(x=FHT$x, y=FHT$y_reg, omega=0.9, lambda2=0, method="er")
+plot(m5)
 }
 \keyword{models}
 \keyword{regression}
